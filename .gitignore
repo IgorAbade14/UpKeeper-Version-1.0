@@ -1,0 +1,3 @@
+# Ignorar logs e ficheiros de estado pessoal
+logs/
+config/ultimo_mes.txt
