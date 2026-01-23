@@ -40,4 +40,5 @@ And run the script!
 
 
 
-* 👨‍💻  Developed by `[https://github.com/IgorAbade14]`
+## 👨‍💻  Developed by
+ `[https://github.com/IgorAbade14]`
