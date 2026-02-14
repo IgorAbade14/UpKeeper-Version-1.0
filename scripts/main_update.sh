@@ -1,60 +1,59 @@
 #!/bin/bash
 
 # ================================================================= #
-# PROJETO: UpKeeper v1.0
-# DESCRIÇÃO: Automação de manutenção mensal com interface gráfica.
-# OBJETIVO: Verificar se é final de semana e se a manutenção do mês
-#           corrente já foi realizada.
+# PROJECT: UpKeeper v1.0
+# DESCRIPTION: Monthly maintenance automation with GUI.
+# OBJECTIVE: Check for weekend status and verify if the current 
+#            month's maintenance has already been performed.
 # ================================================================= #
 
-# --- 1. CAPTURA E DEFINIÇÃO DE VARIÁVEIS ---
-# %u captura o dia (1-7), %m captura o mês (01-12)
-DIA_SEMANA=$(date +%u)
-MES_ATUAL=$(date +%m)
-USUARIO=$(whoami)
+# --- 1. CAPTURE AND VARIABLE DEFINITION ---
+# %u captures the day (1-7), %m captures the month (01-12)
+WEEKDAY=$(date +%u)
+CURRENT_MONTH=$(date +%m)
+CURRENT_USER=$(whoami)
 
-# Definindo o local onde o script salvará o "estado" (memória)
-# Usamos $HOME para que o script funcione em qualquer computador
-ARQUIVO_MEMORIA="$HOME/DevOpsLab/UpKeeper/logs/ultimo_mes.txt"
+# Defining the path where the script saves the "state" (memory)
+# Using $HOME ensures cross-platform compatibility for the user
+STATE_FILE="$HOME/DevOpsLab/UpKeeper/logs/last_run.txt"
 
-# --- 2. PREPARAÇÃO DO AMBIENTE (AUTO-HEALING) ---
-# Garante que as pastas necessárias existam antes da execução
-mkdir -p "$(dirname "$ARQUIVO_MEMORIA")"
+# --- 2. ENVIRONMENT PREPARATION (AUTO-HEALING) ---
+# Ensures the necessary directory structure exists before execution
+mkdir -p "$(dirname "$STATE_FILE")"
 
-# Tenta ler o conteúdo do arquivo de memória.
-# Se o arquivo não existir (2>/dev/null), define como "00" para permitir a comparação.
-ULTIMA_ATT=$(cat "$ARQUIVO_MEMORIA" 2>/dev/null || echo "00")
+# Attempts to read the state file. 
+# If file doesn't exist (2>/dev/null), defaults to "00" to allow comparison.
+LAST_UPDATE=$(cat "$STATE_FILE" 2>/dev/null || echo "00")
 
-# --- 3. LÓGICA DE DECISÃO ---
-# Condição: Se for Sábado/Domingo (>= 6) E o mês atual for diferente da última manutenção
-if [[ $DIA_SEMANA -ge 6 && $MES_ATUAL != $ULTIMA_ATT ]]; then
+# --- 3. DECISION LOGIC ---
+# Condition: If it's Weekend (>= 6) AND current month is different from last update
+if [[ $WEEKDAY -ge 6 && $CURRENT_MONTH != $LAST_UPDATE ]]; then
 
-    # Dispara interface gráfica para interação com o usuário
+    # Triggers Graphical User Interface (GUI) for user interaction
     if zenity --question \
         --title="UpKeeper v1.0" \
-        --text="Olá $USUARIO! Identifiquei que a manutenção mensal ainda não foi feita. Deseja iniciar?" \
-        --ok-label="Sim" \
-        --cancel-label="Não" \
+        --text="Hello $CURRENT_USER! I noticed that the monthly maintenance is pending. Do you want to start now?" \
+        --ok-label="Yes" \
+        --cancel-label="No" \
         --icon-name="system-software-update" \
         --width=350; then
 
-        # --- 4. EXECUÇÃO DOS COMANDOS DE SISTEMA ---
-        # Abre uma nova instância de terminal para que o usuário veja o progresso do apt
+        # --- 4. SYSTEM COMMAND EXECUTION ---
+        # Spawns a new terminal instance so the user can monitor apt progress
         gnome-terminal -- bash -c "
-            echo 'Iniciando atualização do sistema...';
+            echo 'Starting system update...';
             sudo apt update && sudo apt full-upgrade -y;
             
-            # Verifica se os comandos acima terminaram com sucesso (Exit Code 0)
+            # Check if the commands above finished successfully (Exit Code 0)
             if [ \$? -eq 0 ]; then
-                # Redireciona o mês atual para o arquivo de memória (Salva o estado)
-                echo $MES_ATUAL > $ARQUIVO_MEMORIA;
-                echo 'Sucesso! O registro de manutenção foi atualizado.';
+                # Persists the current month to the state file
+                echo $CURRENT_MONTH > $STATE_FILE;
+                echo 'Success! The maintenance log has been updated.';
             else
-                echo 'Houve um erro na atualização. O registro não foi alterado.';
+                echo 'Error detected during update. State file was not modified.';
             fi;
             
-            echo 'Este terminal fechará automaticamente em 5 segundos...';
+            echo 'This terminal will close automatically in 5 seconds...';
             sleep 5"
     fi
 fi
-
